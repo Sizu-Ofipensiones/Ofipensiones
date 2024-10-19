@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, TemplateView
+from django.views.generic import CreateView, TemplateView
 
 # Detalle de un reporte
 class ReportDetailView(TemplateView):
