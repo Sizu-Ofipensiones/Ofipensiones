@@ -3,6 +3,9 @@ import json
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# Lista de los 10 userId disponibles
+user_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
 # Función para enviar una solicitud de lectura de reporte
 def send_read_request(user_id):
     credentials = pika.PlainCredentials('monitoring_user', 'isis2503')
@@ -28,15 +31,14 @@ def measure_response_time(user_id):
     end_time = time.time()  # Marcar el final después del envío
     return end_time - start_time
 
-# Prueba de carga para 3000 solicitudes concurrentes
+# Prueba de carga para 3000 solicitudes concurrentes utilizando 10 userId
 def load_test_concurrent():
-    num_requests = 3000  # 3000 usuarios
-    user_ids = range(1, num_requests + 1)  # Simular 3000 usuarios con IDs únicos
+    num_requests = 3000  # 3000 solicitudes
     total_time = 0
 
     # Usar ThreadPoolExecutor para manejar 3000 hilos (usuarios) concurrentes
     with ThreadPoolExecutor(max_workers=3000) as executor:
-        futures = [executor.submit(measure_response_time, user_id) for user_id in user_ids]
+        futures = [executor.submit(measure_response_time, user_ids[i % 10]) for i in range(num_requests)]
 
         # Esperar a que todas las solicitudes se completen y recolectar tiempos
         response_times = []
