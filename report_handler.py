@@ -54,7 +54,7 @@ def start_report_handler():
     channel = connection.channel()
 
     # Declarar el exchange 'bus_mensajeria' si no ha sido creado
-    channel.exchange_declare(exchange='bus_mensajeria', exchange_type='direct')
+    channel.exchange_declare(exchange='bus_mensajeria', exchange_type='topic')
 
     # Declarar la cola (por si no ha sido creada) y enlazarla al exchange
     channel.queue_declare(queue='report_queue', arguments={'x-max-priority': 10})
