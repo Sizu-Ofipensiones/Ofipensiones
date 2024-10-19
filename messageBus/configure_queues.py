@@ -2,7 +2,8 @@ import pika
 
 def configure_queues():
     """Configura el exchange y las colas con prioridad en RabbitMQ"""
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost')) # Conectar con RabbitMQ
+    credentials = pika.PlainCredentials('monitoring_user', 'isis2503')
+    connection = pika.BlockingConnection( pika.ConnectionParameters('10.128.0.4', 5672, '/', credentials))
     channel = connection.channel()
 
     # Declarar el exchange tipo 'topic' centralizado
