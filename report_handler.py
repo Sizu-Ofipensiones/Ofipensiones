@@ -25,13 +25,17 @@ def generate_reports():
 def send_report_to_user_device(user_id, channel):
     report = report_storage.get(user_id)
     if report:
-        # Publicar el reporte en la cola de respuestas (userDevice.read_response)
-        channel.basic_publish(
-            exchange='bus_mensajeria',  # El exchange configurado en RabbitMQ
-            routing_key='userDevice.read_response',  # Cola para respuestas de lectura
-            body=json.dumps(report)
-        )
-        print(f"Reporte enviado para el usuario {user_id}: {report}")
+        try:
+            # Publicar el reporte en la cola de respuestas (userDevice.read_response)
+            print(f"Enviando reporte para el usuario {user_id} a la cola 'userDevice.read_response'...")
+            channel.basic_publish(
+                exchange='bus_mensajeria',  # El exchange configurado en RabbitMQ
+                routing_key='userDevice.read_response',  # Cola para respuestas de lectura
+                body=json.dumps(report)
+            )
+            print(f"Reporte enviado para el usuario {user_id}: {report}")
+        except Exception as e:
+            print(f"Error enviando el reporte para el usuario {user_id}: {e}")
     else:
         print(f"Reporte no encontrado para el usuario {user_id}")
 
@@ -50,7 +54,7 @@ def start_report_handler():
     channel = connection.channel()
 
     # Declarar el exchange 'bus_mensajeria' si no ha sido creado
-    channel.exchange_declare(exchange='bus_mensajeria', exchange_type='topic')
+    channel.exchange_declare(exchange='bus_mensajeria', exchange_type='direct')
 
     # Declarar la cola (por si no ha sido creada) y enlazarla al exchange
     channel.queue_declare(queue='report_queue', arguments={'x-max-priority': 10})
