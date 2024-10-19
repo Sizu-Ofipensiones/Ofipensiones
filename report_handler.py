@@ -1,6 +1,8 @@
 import pika
 import json
 import datetime
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # Diccionario para almacenar los reportes generados
 report_storage = {}
@@ -59,9 +61,33 @@ def start_report_handler():
     print("ReportHandler escuchando en 'report_queue'...")
     channel.start_consuming()
 
+# Servidor HTTP básico para responder a los health checks
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
+            # Responder con un status 200 OK para los health checks
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"OK")
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+def start_http_server():
+    server_address = ('', 8080)  # Escuchar en el puerto 8080
+    httpd = HTTPServer(server_address, HealthCheckHandler)
+    print("Servidor HTTP para health checks escuchando en el puerto 8080...")
+    httpd.serve_forever()
+
+# Iniciar tanto el servidor HTTP como el report handler
 if __name__ == "__main__":
     # Crear los 10 reportes inicialmente
     generate_reports()
 
-    # Iniciar el manejador de reportes
-    start_report_handler()
+    # Iniciar el manejador de reportes en un hilo separado
+    report_thread = threading.Thread(target=start_report_handler)
+    report_thread.daemon = True
+    report_thread.start()
+
+    # Iniciar el servidor HTTP para los health checks
+    start_http_server()
