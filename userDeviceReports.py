@@ -3,7 +3,7 @@ import json
 
 # Función para enviar solicitudes de lectura de reporte al manejador de reportes
 def send_read_request(user_id):
-    # Conectar con RabbitMQ
+    # Conectar con RabbitMQ (con la IP de la VM donde está RabbitMQ)
     credentials = pika.PlainCredentials('monitoring_user', 'isis2503')
     connection = pika.BlockingConnection(pika.ConnectionParameters('10.128.0.4', 5672, '/', credentials))
     channel = connection.channel()
@@ -11,33 +11,33 @@ def send_read_request(user_id):
     # Crear el mensaje de solicitud de lectura del reporte para el usuario
     message = {'user_id': user_id}
 
-    # Publicar el mensaje en el exchange de RabbitMQ
+    # Publicar el mensaje en el exchange de RabbitMQ (cola de solicitudes)
     channel.basic_publish(
         exchange='bus_mensajeria',  # El exchange configurado en RabbitMQ
-        routing_key='report.read',  # Enrutamiento para solicitudes de lectura de reportes
+        routing_key='report.read',  # Cola de solicitudes de lectura
         body=json.dumps(message)
     )
 
     print(f"Solicitud de lectura enviada para el usuario {user_id}")
     connection.close()
 
-# Escuchar las respuestas de lectura de reportes
+# Función para escuchar las respuestas de lectura de reportes
 def listen_for_report_responses():
-    # Conectar con RabbitMQ
+    # Conectar con RabbitMQ (misma instancia de RabbitMQ, accesible desde esta VM)
     credentials = pika.PlainCredentials('monitoring_user', 'isis2503')
     connection = pika.BlockingConnection(pika.ConnectionParameters('10.128.0.4', 5672, '/', credentials))
     channel = connection.channel()
 
-    # Declarar la cola donde escucharemos las respuestas de los reportes
-    channel.queue_declare(queue='report_queue')
+    # Declarar la cola donde escucharemos las respuestas de los reportes (userDevice.read_response)
+    channel.queue_declare(queue='userDevice.read_response')
 
     # Callback para manejar la respuesta del reporte
     def callback(ch, method, properties, body):
         report = json.loads(body)
         print(f"Reporte recibido para el usuario {report['user_id']}: {report}")
 
-    # Consumir los mensajes de la cola
-    channel.basic_consume(queue='report_queue', on_message_callback=callback, auto_ack=True)
+    # Consumir los mensajes de la cola de respuestas
+    channel.basic_consume(queue='userDevice.read_response', on_message_callback=callback, auto_ack=True)
 
     print("Esperando respuestas de reportes...")
     channel.start_consuming()
