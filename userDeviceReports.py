@@ -29,7 +29,7 @@ def listen_for_report_responses():
     channel = connection.channel()
 
     # Declarar el exchange 'bus_mensajeria' si no ha sido creado
-    channel.exchange_declare(exchange='bus_mensajeria', exchange_type='direct')
+    channel.exchange_declare(exchange='bus_mensajeria', exchange_type='topic')
 
     # Declarar la cola donde escucharemos las respuestas de los reportes (userDevice.read_response)
     channel.queue_declare(queue='userDevice.read_response')
