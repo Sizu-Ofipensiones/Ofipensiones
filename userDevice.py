@@ -3,7 +3,8 @@ import json
 
 def send_message_to_queue(queue, message):
     # Conectar con RabbitMQ
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+    credentials = pika.PlainCredentials('monitoring_user', 'isis2503')
+    connection = pika.BlockingConnection(pika.ConnectionParameters('10.128.0.4', 5672, '/', credentials))
     channel = connection.channel()
 
     # Publicar el mensaje en el exchange ya existente (declarado por el bus de mensajería)
@@ -36,3 +37,12 @@ pagos = [
 
 for pago in pagos:
     send_message_to_queue('payment.process', pago)
+
+# Función para solicitar la lectura de un reporte por ID
+def request_report_detail(report_id):
+    message = {'action': 'read', 'report_id': report_id}
+    send_message_to_queue('report.read', message)
+# Ejecutar el script
+if _name_ == "_main_":
+    # Solicitar la lectura del reporte con ID 1
+    request_report_detail(1)
