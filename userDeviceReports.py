@@ -28,8 +28,14 @@ def listen_for_report_responses():
     connection = pika.BlockingConnection(pika.ConnectionParameters('10.128.0.4', 5672, '/', credentials))
     channel = connection.channel()
 
+    # Declarar el exchange 'bus_mensajeria' si no ha sido creado
+    channel.exchange_declare(exchange='bus_mensajeria', exchange_type='direct')
+
     # Declarar la cola donde escucharemos las respuestas de los reportes (userDevice.read_response)
     channel.queue_declare(queue='userDevice.read_response')
+
+    # Enlazar la cola al exchange para recibir los mensajes de respuesta
+    channel.queue_bind(exchange='bus_mensajeria', queue='userDevice.read_response', routing_key='userDevice.read_response')
 
     # Callback para manejar la respuesta del reporte
     def callback(ch, method, properties, body):

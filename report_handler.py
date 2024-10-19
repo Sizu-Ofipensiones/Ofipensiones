@@ -49,6 +49,9 @@ def start_report_handler():
     connection = pika.BlockingConnection(pika.ConnectionParameters('10.128.0.4', 5672, '/', credentials))
     channel = connection.channel()
 
+    # Declarar el exchange 'bus_mensajeria' si no ha sido creado
+    channel.exchange_declare(exchange='bus_mensajeria', exchange_type='direct')
+
     # Declarar la cola (por si no ha sido creada) y enlazarla al exchange
     channel.queue_declare(queue='report_queue', arguments={'x-max-priority': 10})
     
