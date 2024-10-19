@@ -71,7 +71,7 @@ def start_report_handler():
 # Servidor HTTP básico para responder a los health checks
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path == '/health':
+        if self.path == '/health-check/':
             # Responder con un status 200 OK para los health checks
             self.send_response(200)
             self.end_headers()
