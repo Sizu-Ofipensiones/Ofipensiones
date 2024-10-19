@@ -33,11 +33,10 @@ def measure_response_time(user_id):
 
 # Prueba de carga para 3000 solicitudes concurrentes utilizando 10 userId
 def load_test_concurrent():
-    num_requests = 3000  # 3000 solicitudes
+    num_requests = int(input("Ingrese la cantidad de peticiones:"))
     total_time = 0
 
-    # Usar ThreadPoolExecutor para manejar 3000 hilos (usuarios) concurrentes
-    with ThreadPoolExecutor(max_workers=3000) as executor:
+    with ThreadPoolExecutor(max_workers=num_requests) as executor:
         futures = [executor.submit(measure_response_time, user_ids[i % 10]) for i in range(num_requests)]
 
         # Esperar a que todas las solicitudes se completen y recolectar tiempos
@@ -47,7 +46,7 @@ def load_test_concurrent():
 
     # Calcular el tiempo promedio de respuesta
     avg_time = sum(response_times) / num_requests
-    print(f"El tiempo promedio de respuesta para 3000 usuarios concurrentes fue de {avg_time} segundos.")
+    print(f"El tiempo promedio de respuesta para {num_requests} usuarios concurrentes fue de {avg_time} segundos.")
 
 if __name__ == "__main__":
     load_test_concurrent()
