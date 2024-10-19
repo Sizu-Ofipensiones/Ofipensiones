@@ -58,11 +58,3 @@ def start_report_handler():
 
     print("ReportHandler escuchando en 'report_queue'...")
     channel.start_consuming()
-
-# Ejecutar el manejador
-if _name_ == "_main_":
-    # Crear los 10 reportes inicialmente
-    generate_reports()
-
-    # Iniciar el manejador de reportes
-    start_report_handler()
