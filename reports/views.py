@@ -1,12 +1,24 @@
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView
-from .models import Report
 
 # Detalle de un reporte
-class ReportDetailView(DetailView):
-    model = Report
+class ReportDetailView(TemplateView):
     template_name = 'reports/report_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        pk = self.kwargs.get('pk')
+        reports = generate_reports()
+
+        # Buscar el reporte basado en pk
+        report = reports.get(int(pk))
+        if not report:
+            raise Http404("Report not found")
+
+        # Agregar el reporte al contexto
+        context['report'] = report
+        return context
 
 # Crear un reporte
 class ReportCreateView(CreateView):
