@@ -29,7 +29,7 @@ def listen_for_report_responses():
     channel = connection.channel()
 
     # Declarar la cola donde escucharemos las respuestas de los reportes
-    channel.queue_declare(queue='userDevice.read_response')
+    channel.queue_declare(queue='report_queue')
 
     # Callback para manejar la respuesta del reporte
     def callback(ch, method, properties, body):
@@ -37,13 +37,13 @@ def listen_for_report_responses():
         print(f"Reporte recibido para el usuario {report['user_id']}: {report}")
 
     # Consumir los mensajes de la cola
-    channel.basic_consume(queue='userDevice.read_response', on_message_callback=callback, auto_ack=True)
+    channel.basic_consume(queue='report_queue', on_message_callback=callback, auto_ack=True)
 
     print("Esperando respuestas de reportes...")
     channel.start_consuming()
 
 # Ejecutar el script
-if _name_ == "_main_":
+if __name__ == "__main__":
     # Enviar una solicitud para el reporte del usuario 1
     send_read_request(1)
 
