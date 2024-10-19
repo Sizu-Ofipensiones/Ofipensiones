@@ -17,7 +17,8 @@ def process_payment(data):
 
 def start_payment_handler():
     """Iniciar el manejador de pagos que escucha la cola 'payment_queue'"""
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+    credentials = pika.PlainCredentials('monitoring_user', 'isis2503')
+    connection = pika.BlockingConnection(pika.ConnectionParameters('10.128.0.4', 5672, '/', credentials))
     channel = connection.channel()
 
     # Declarar la cola (por si no ha sido creada) y enlazarla al exchange
