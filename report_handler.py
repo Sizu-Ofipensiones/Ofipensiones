@@ -49,7 +49,7 @@ def send_report_to_user_device(user_id, channel):
     total_instances = len(report_instances)
 
     # Si menos del 25% de las instancias están saludables, enviar mensaje de error
-    if healthy_instances < total_instances * 0.25:
+    if healthy_instances <= total_instances * 0.25:
         error_message = {
             'error': "El servicio de reportes no está disponible en este momento. Por favor, intente más tarde."
         }
