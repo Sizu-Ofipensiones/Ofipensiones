@@ -42,11 +42,13 @@ def listen_for_report_responses():
         response = json.loads(body)
         
         # Verificar si el mensaje contiene un campo de error
-        if "Error" in response:
+        if "error" in response:
             print(f"Error recibido: {response['error']}")
-        else:
+        elif "user_id" in response:
             # Procesar el reporte si no es un mensaje de error
             print(f"Reporte recibido para el usuario {response['user_id']}: {response}")
+        else:
+            print("Mensaje desconocido recibido:", response)
 
     # Consumir los mensajes de la cola de respuestas
     channel.basic_consume(queue='userDevice.read_response', on_message_callback=callback, auto_ack=True)
