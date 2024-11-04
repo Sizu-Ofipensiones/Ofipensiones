@@ -42,7 +42,7 @@ def listen_for_report_responses():
         response = json.loads(body)
         
         # Verificar si el mensaje contiene un campo de error
-        if "error" in response:
+        if "Error" in response:
             print(f"Error recibido: {response['error']}")
         else:
             # Procesar el reporte si no es un mensaje de error
