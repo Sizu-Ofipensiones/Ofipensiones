@@ -2,10 +2,19 @@ import pika
 import json
 import datetime
 import threading
+import requests
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # Diccionario para almacenar los reportes generados
 report_storage = {}
+
+# Lista de URLs de health check de cada instancia del microservicio de reportes
+report_instances = [
+    "http://10.128.0.7:8080/health-check/",
+    "http://10.128.0.8:8080/health-check/",
+    "http://10.128.0.9:8080/health-check/",
+    "http://10.128.0.10:8080/health-check/"
+]
 
 # Función para generar 10 reportes quemados
 def generate_reports():
@@ -21,12 +30,41 @@ def generate_reports():
         report_storage[i] = report
         print(f"Reporte creado para el usuario {i}: {report}")
 
+# Función para verificar el estado de las instancias de reportes
+def check_instance_health():
+    healthy_instances = 0
+    for url in report_instances:
+        try:
+            response = requests.get(url, timeout=2)
+            if response.status_code == 200:
+                healthy_instances += 1
+        except requests.RequestException:
+            continue
+    return healthy_instances
+
 # Función para enviar reportes en respuesta a una solicitud de lectura
 def send_report_to_user_device(user_id, channel):
+    # Verificar el número de instancias saludables
+    healthy_instances = check_instance_health()
+    total_instances = len(report_instances)
+
+    # Si menos del 25% de las instancias están saludables, enviar mensaje de error
+    if healthy_instances < total_instances * 0.25:
+        error_message = {
+            'error': "El servicio de reportes no está disponible en este momento. Por favor, intente más tarde."
+        }
+        channel.basic_publish(
+            exchange='bus_mensajeria',
+            routing_key='userDevice.read_response',
+            body=json.dumps(error_message)
+        )
+        print("Error enviado: menos del 25% de las instancias de reportes están operativas.")
+        return
+
+    # Obtener y enviar el reporte si el servicio está operativo
     report = report_storage.get(user_id)
     if report:
         try:
-            # Publicar el reporte en la cola de respuestas (userDevice.read_response)
             print(f"Enviando reporte para el usuario {user_id} a la cola 'userDevice.read_response'...")
             channel.basic_publish(
                 exchange='bus_mensajeria',  # El exchange configurado en RabbitMQ
