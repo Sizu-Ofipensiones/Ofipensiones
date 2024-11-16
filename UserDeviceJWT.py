@@ -1,7 +1,6 @@
 import pika
 import json
 import uuid
-import threading
 
 class RPCClient:
     def __init__(self, queue='user.login'):
@@ -100,12 +99,7 @@ def main():
         print("Error de autenticación:", response.get('message'))
         return
 
-    # Paso 2: Definir las acciones según el rol (opcional)
-    # Aquí puedes implementar lógica basada en el rol del usuario
-    # Por ejemplo, restringir ciertas acciones para roles específicos
-    # Para este ejemplo, asumiremos que cualquier rol puede crear usuarios
-
-    # Paso 3: Crear solo 3 usuarios con roles específicos
+    # Paso 2: Crear solo 3 usuarios con roles específicos
     usuarios = [
         {
             'action': 'create',
@@ -130,10 +124,14 @@ def main():
         }
     ]
     
+    print("\nCreando usuarios específicos...\n")
     for usuario in usuarios:
         send_message_to_queue('user.create', usuario, jwt_token)
+        # Log de creación del usuario
+        print(f"Usuario creado: Email: {usuario['email']}, Contraseña: {usuario['password']}\n")
     
-    # Paso 4: Enviar solicitudes de pago (si es necesario)
+    # Opcional: Puedes eliminar las siguientes secciones si no necesitas enviar solicitudes de pago o reportes
+    # Paso 3: Enviar solicitudes de pago (si es necesario)
     pagos = [
         {'action': 'process', 'amount': 100, 'currency': 'USD', 'user_id': 1},
         {'action': 'process', 'amount': 250, 'currency': 'USD', 'user_id': 2},
@@ -143,7 +141,7 @@ def main():
     for pago in pagos:
         send_message_to_queue('payment.process', pago, jwt_token)
     
-    # Paso 5: Solicitar la lectura del reporte con ID 1
+    # Paso 4: Solicitar la lectura del reporte con ID 1
     request_report_detail(1, jwt_token)
 
 if __name__ == "__main__":
