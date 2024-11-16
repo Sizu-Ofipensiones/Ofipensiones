@@ -1,48 +1,115 @@
 import pika
 import json
+import requests
 
-def send_message_to_queue(queue, message):
+# Configuración de Auth0
+AUTH0_DOMAIN = 'dev-xitt1wu7afthncmv.us.auth0.com'
+CLIENT_ID = 'YOURCLIENTID'
+CLIENT_SECRET = 'YOUR_CLIENT_SECRET'
+AUDIENCE = 'YOUR_API_IDENTIFIER'
+
+def authenticate_user():
+    """
+    Solicitar credenciales al usuario y autenticarse en Auth0.
+    """
+    print("\n=== Iniciar Sesión en el Sistema ===")
+    username = input("Usuario (email): ")
+    password = input("Contraseña: ")
+
+    # Construir la URL para obtener el token
+    url = f"https://{AUTH0_DOMAIN}/oauth/token"
+    payload = {
+        'grant_type': 'password',
+        'username': username,
+        'password': password,
+        'audience': AUDIENCE,
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET,
+        'scope': 'openid profile email'
+    }
+
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        token = data.get('access_token')
+
+        if token:
+            print("Autenticación exitosa")
+            return token
+        else:
+            print("No se pudo obtener el token.")
+            return None
+    except requests.exceptions.RequestException as e:
+        print(f"Error al autenticar: {e}")
+        return None
+
+def get_user_roles(token):
+    """
+    Recupera los roles del usuario autenticado desde Auth0.
+    """
+    url = f"https://{AUTH0_DOMAIN}/userinfo"
+    headers = {'Authorization': f'Bearer {token}'}
+
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        user_data = response.json()
+        roles = user_data.get("https://example.com/roles", [])  # Ajusta según la configuración de tus claims
+        user_id = user_data.get("sub", "unknown")
+
+        return roles, user_id
+    except requests.exceptions.RequestException as e:
+        print(f"Error al obtener roles: {e}")
+        return [], "unknown"
+
+def send_message_to_queue(queue, message, roles, user_id):
+    """
+    Envía un mensaje a RabbitMQ validando los roles primero.
+    """
+    # Validar acceso según rol
+    if "Administrador" in roles:
+        print("Acceso concedido: Administrador")
+    elif "Padre" in roles and message.get("user_id") == user_id:
+        print("Acceso concedido: Padre")
+    else:
+        print("Acceso denegado.")
+        return
+
     # Conectar con RabbitMQ
     credentials = pika.PlainCredentials('monitoring_user', 'isis2503')
     connection = pika.BlockingConnection(pika.ConnectionParameters('10.128.0.4', 5672, '/', credentials))
     channel = connection.channel()
 
-    # Publicar el mensaje en el exchange ya existente (declarado por el bus de mensajería)
+    # Publicar el mensaje
     channel.basic_publish(
-        exchange='bus_mensajeria',  # Usar el exchange ya configurado por el bus
-        routing_key=queue,  # Puede ser 'user.create', 'payment.process', etc.
+        exchange='bus_mensajeria',
+        routing_key=queue,
         body=json.dumps(message)
     )
-    
+
     print(f"Mensaje enviado a {queue}: {message}")
     connection.close()
 
-# Enviar múltiples solicitudes de CRUD de usuarios
-usuarios = [
-    {'action': 'create', 'name': 'Juan', 'email': 'juan@example.com', 'password': 'password123', 'position': 'Gerente'},
-    {'action': 'create', 'name': 'Ana', 'email': 'ana@example.com', 'password': 'password123', 'position': 'Desarrolladora'},
-    {'action': 'update', 'id': 1, 'name': 'Juan Actualizado', 'email': 'juan.updated@example.com', 'position': 'Director'},
-    {'action': 'delete', 'id': 2},  # Borrar un usuario por ID
-]
+def main():
+    # Autenticar al usuario
+    token = authenticate_user()
+    if not token:
+        print("No se pudo autenticar al usuario. Saliendo.")
+        return
 
-for usuario in usuarios:
-    send_message_to_queue('user.' + usuario['action'], usuario)
+    # Obtener roles e ID del usuario
+    roles, user_id = get_user_roles(token)
+    print(f"Roles: {roles}, User ID: {user_id}")
 
-# Enviar múltiples solicitudes de pago
-pagos = [
-    {'action': 'process', 'amount': 100, 'currency': 'USD', 'user_id': 1},
-    {'action': 'process', 'amount': 250, 'currency': 'USD', 'user_id': 2},
-    {'action': 'process', 'amount': 500, 'currency': 'EUR', 'user_id': 1},
-]
+    # Solicitudes de ejemplo
+    usuarios = [
+        {"action": "create", "user_id": "auth0|12345", "name": "Juan", "email": "juan@example.com"},
+        {"action": "create", "user_id": "auth0|67890", "name": "Ana", "email": "ana@example.com"}
+    ]
 
-for pago in pagos:
-    send_message_to_queue('payment.process', pago)
+    for usuario in usuarios:
+        send_message_to_queue("user.create", usuario, roles, user_id)
 
-# Función para solicitar la lectura de un reporte por ID
-def request_report_detail(report_id):
-    message = {'action': 'read', 'report_id': report_id}
-    send_message_to_queue('report.read', message)
-# Ejecutar el script
-if _name_ == "_main_":
-    # Solicitar la lectura del reporte con ID 1
-    request_report_detail(1)
+if __name__ == "__main__":
+    main()
