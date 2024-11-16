@@ -6,7 +6,7 @@ import requests
 AUTH0_DOMAIN = 'dev-xitt1wu7afthncmv.us.auth0.com'
 CLIENT_ID = 'TTmqAS6niW6L9heQPuNX650m7wLrHWpk'
 CLIENT_SECRET = 'tTRaEYXFEgtKYW3xCGVVxCCTgcJp_elcfoPaISz4M7L_EkIX-Fbg-1Fg51wR7rj6'
-AUDIENCE = 'https/users/api'
+AUDIENCE = 'https://users/api'
 
 def authenticate_user():
     """
