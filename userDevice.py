@@ -103,11 +103,6 @@ def main():
     roles, user_id = get_user_roles(token)
     print(f"Roles: {roles}, User ID: {user_id}")
 
-    # Solicitudes de ejemplo
-    usuarios = [
-        {"action": "create", "user_id": "auth0|12345", "name": "Juan", "email": "juan@example.com"},
-        {"action": "create", "user_id": "auth0|67890", "name": "Ana", "email": "ana@example.com"}
-    ]
 
     for usuario in usuarios:
         send_message_to_queue("user.create", usuario, roles, user_id)
