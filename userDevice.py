@@ -61,7 +61,7 @@ class CallbackHandler(BaseHTTPRequestHandler):
                 # Responder al usuario
                 self.send_response(200)
                 self.end_headers()
-                self.wfile.write(b'Autenticación exitosa. Puedes cerrar esta ventana.')
+                self.wfile.write('Autenticación exitosa. Puedes cerrar esta ventana.'.encode('utf-8'))
                 
                 # Detener el servidor
                 threading.Thread(target=self.server.shutdown).start()
@@ -69,7 +69,7 @@ class CallbackHandler(BaseHTTPRequestHandler):
                 logging.error(f"Error al intercambiar el código por token: {e}")
                 self.send_response(500)
                 self.end_headers()
-                self.wfile.write(b'Error durante la autenticación.')
+                self.wfile.write('Error durante la autenticación.'.encode('utf-8'))
                 
     def log_message(self, format, *args):
         return  # Evitar logs de HTTPServer en la consola
