@@ -81,10 +81,10 @@ WSGI_APPLICATION = 'ofipensiones.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_Users',  
+        'NAME': 'db_users',  
         'USER': 'postgres',    
         'PASSWORD': '12345',  
-        'HOST': 'localhost',   
+        'HOST': '10.128.0.5',   
         'PORT': '5432',        
     }
 }
