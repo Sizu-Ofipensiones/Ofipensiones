@@ -4,9 +4,9 @@ import requests
 
 # Configuración de Auth0
 AUTH0_DOMAIN = 'dev-xitt1wu7afthncmv.us.auth0.com'
-CLIENT_ID = 'YOURCLIENTID'
-CLIENT_SECRET = 'YOUR_CLIENT_SECRET'
-AUDIENCE = 'YOUR_API_IDENTIFIER'
+CLIENT_ID = 'TTmqAS6niW6L9heQPuNX650m7wLrHWpk'
+CLIENT_SECRET = 'tTRaEYXFEgtKYW3xCGVVxCCTgcJp_elcfoPaISz4M7L_EkIX-Fbg-1Fg51wR7rj6'
+AUDIENCE = 'https/users/api'
 
 def authenticate_user():
     """
