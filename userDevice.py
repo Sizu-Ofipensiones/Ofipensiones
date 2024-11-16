@@ -1,7 +1,10 @@
+import os
 import pika
 import json
 import requests
 import logging
+from jose import jwt
+from jose.exceptions import JWTError, ExpiredSignatureError
 
 # Configuración de los logs
 logging.basicConfig(
@@ -10,10 +13,31 @@ logging.basicConfig(
 )
 
 # Configuración de Auth0
-AUTH0_DOMAIN = 'dev-xitt1wu7afthncmv.us.auth0.com'
-CLIENT_ID = 'TTmqAS6niW6L9heQPuNX650m7wLrHWpk'
-CLIENT_SECRET = 'tTRaEYXFEgtKYW3xCGVVxCCTgcJp_elcfoPaISz4M7L_EkIX-Fbg-1Fg51wR7rj6'
-AUDIENCE = 'https/users/api'
+AUTH0_DOMAIN = 'dev-pnpogkrkp7l1bdda.us.auth0.com'  # Tu dominio de Auth0
+CLIENT_ID = 'rjUUNTLgqkhwpW4u1WmRO6JxQ33WI0x2'      # Client ID de la Aplicación Nativa
+CLIENT_SECRET = 'RpgjMYB54Q5YXjWJwnAEqeRzpYdhf_LDH6VCVkTIxGz9kdWXj9GtdOOukvhoYuLU'    # Se obtiene desde una variable de entorno
+AUDIENCE = 'https://users/api'                     # Identificador de la API
+NAMESPACE = 'https://ofipensiones.com/claims/'      # Namespace para reclamaciones personalizadas
+
+def get_jwks():
+    jwks_url = f'https://{AUTH0_DOMAIN}/.well-known/jwks.json'
+    response = requests.get(jwks_url)
+    response.raise_for_status()
+    return response.json()
+
+def get_public_key(token):
+    unverified_header = jwt.get_unverified_header(token)
+    jwks = get_jwks()
+    for key in jwks['keys']:
+        if key['kid'] == unverified_header['kid']:
+            return {
+                'kty': key['kty'],
+                'kid': key['kid'],
+                'use': key['use'],
+                'n': key['n'],
+                'e': key['e']
+            }
+    return None
 
 def authenticate_user():
     """
@@ -56,24 +80,31 @@ def get_user_roles(token):
     """
     Recupera los roles del usuario autenticado desde el token JWT.
     """
-    logging.info("Solicitando roles del usuario desde /userinfo.")
-    url = f"https://{AUTH0_DOMAIN}/userinfo"
-    headers = {'Authorization': f'Bearer {token}'}
-
-    logging.debug(f"Headers enviados a /userinfo: {headers}")
+    logging.info("Decodificando el token para obtener los roles.")
     try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        user_data = response.json()
-        logging.debug(f"Datos del usuario obtenidos: {user_data}")
+        rsa_key = get_public_key(token)
+        if not rsa_key:
+            logging.error("No se pudo encontrar la clave RSA apropiada.")
+            return [], "unknown"
 
-        roles = user_data.get("https://example.com/roles", [])
-        user_id = user_data.get("sub", "unknown")
+        decoded = jwt.decode(
+            token,
+            rsa_key,
+            algorithms=['RS256'],
+            audience=AUDIENCE,
+            issuer=f"https://{AUTH0_DOMAIN}/"
+        )
+
+        roles = decoded.get(f"{NAMESPACE}roles", [])
+        user_id = decoded.get("sub", "unknown")
 
         logging.info(f"Roles obtenidos: {roles}, User ID: {user_id}")
         return roles, user_id
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error al obtener roles del usuario: {e}")
+    except ExpiredSignatureError:
+        logging.error("El token ha expirado.")
+        return [], "unknown"
+    except JWTError as e:
+        logging.error(f"Error al decodificar el token: {e}")
         return [], "unknown"
 
 def send_message_to_queue(queue, message, roles, user_id):
