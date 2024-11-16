@@ -1,169 +1,86 @@
+from authlib.integrations.requests_client import OAuth2Session
 import os
-import pika
-import json
-import requests
+import webbrowser
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
-from jose import jwt
-from jose.exceptions import JWTError, ExpiredSignatureError
 
-# Configuración de los logs
+# Configuración de Auth0
+AUTH0_DOMAIN = 'dev-pnpogkrkp7l1bdda.us.auth0.com'
+CLIENT_ID = 'rjUUNTLgqkhwpW4u1WmRO6JxQ33WI0x2'  # Client ID de la Aplicación Nativa
+REDIRECT_URI = 'http://localhost:8000/callback'
+AUDIENCE = 'https://users/api'
+
+# Crear una sesión OAuth2 con PKCE
+session = OAuth2Session(
+    CLIENT_ID,
+    redirect_uri=REDIRECT_URI,
+    scope='openid profile email'
+)
+
+# Generar la URL de autorización
+authorization_url, state = session.create_authorization_url(
+    f'https://{AUTH0_DOMAIN}/authorize',
+    audience=AUDIENCE,
+    code_challenge_method='S256'
+)
+
+# Abrir el navegador para que el usuario inicie sesión
+webbrowser.open(authorization_url)
+
+# Variable global para almacenar el token
+access_token = None
+
+# Configurar logging
 logging.basicConfig(
-    level=logging.DEBUG,  # Cambia a INFO o ERROR en producción
+    level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# Configuración de Auth0
-AUTH0_DOMAIN = 'dev-pnpogkrkp7l1bdda.us.auth0.com'  # Tu dominio de Auth0
-CLIENT_ID = 'rjUUNTLgqkhwpW4u1WmRO6JxQ33WI0x2'      # Client ID de la Aplicación Nativa
-CLIENT_SECRET = 'RpgjMYB54Q5YXjWJwnAEqeRzpYdhf_LDH6VCVkTIxGz9kdWXj9GtdOOukvhoYuLU'    # Se obtiene desde una variable de entorno
-AUDIENCE = 'https://users/api'                     # Identificador de la API
-NAMESPACE = 'https://ofipensiones.com/claims/'      # Namespace para reclamaciones personalizadas
+# Servidor HTTP para manejar el callback
+class CallbackHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        global access_token
+        if self.path.startswith('/callback'):
+            # Extraer el código de autorización
+            from urllib.parse import urlparse, parse_qs
+            query = urlparse(self.path).query
+            params = parse_qs(query)
+            code = params.get('code')[0]
+            
+            try:
+                # Intercambiar el código por un token
+                token = session.fetch_token(
+                    f'https://{AUTH0_DOMAIN}/oauth/token',
+                    code=code,
+                    client_secret='RpgjMYB54Q5YXjWJwnAEqeRzpYdhf_LDH6VCVkTIxGz9kdWXj9GtdOOukvhoYuLU'# Asegúrate de configurar esta variable
+                )
+                access_token = token['access_token']
+                logging.info("Autenticación exitosa. Token obtenido.")
+                
+                # Responder al usuario
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'Autenticación exitosa. Puedes cerrar esta ventana.')
+                
+                # Detener el servidor
+                threading.Thread(target=self.server.shutdown).start()
+            except Exception as e:
+                logging.error(f"Error al intercambiar el código por token: {e}")
+                self.send_response(500)
+                self.end_headers()
+                self.wfile.write(b'Error durante la autenticación.')
+                
+    def log_message(self, format, *args):
+        return  # Evitar logs de HTTPServer en la consola
 
-def get_jwks():
-    jwks_url = f'https://{AUTH0_DOMAIN}/.well-known/jwks.json'
-    response = requests.get(jwks_url)
-    response.raise_for_status()
-    return response.json()
+# Iniciar el servidor HTTP
+server = HTTPServer(('localhost', 8000), CallbackHandler)
+server.serve_forever()
 
-def get_public_key(token):
-    unverified_header = jwt.get_unverified_header(token)
-    jwks = get_jwks()
-    for key in jwks['keys']:
-        if key['kid'] == unverified_header['kid']:
-            return {
-                'kty': key['kty'],
-                'kid': key['kid'],
-                'use': key['use'],
-                'n': key['n'],
-                'e': key['e']
-            }
-    return None
-
-def authenticate_user():
-    """
-    Solicitar credenciales al usuario y autenticarse en Auth0.
-    """
-    logging.info("Iniciando el proceso de autenticación del usuario.")
-    username = input("Usuario (email): ")
-    password = input("Contraseña: ")
-
-    # Construir la URL para obtener el token
-    url = f"https://{AUTH0_DOMAIN}/oauth/token"
-    payload = {
-        'grant_type': 'password',
-        'username': username,
-        'password': password,
-        'audience': AUDIENCE,
-        'client_id': CLIENT_ID,
-        'client_secret': CLIENT_SECRET,
-        'scope': 'openid profile email'
-    }
-
-    logging.debug(f"Payload enviado al endpoint /oauth/token: {payload}")
-    try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
-        data = response.json()
-        token = data.get('access_token')
-
-        if token:
-            logging.info("Autenticación exitosa. Token obtenido.")
-            return token
-        else:
-            logging.error("No se pudo obtener el token. Respuesta incompleta.")
-            return None
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error al autenticar: {e}")
-        return None
-
-def get_user_roles(token):
-    """
-    Recupera los roles del usuario autenticado desde el token JWT.
-    """
-    logging.info("Decodificando el token para obtener los roles.")
-    try:
-        rsa_key = get_public_key(token)
-        if not rsa_key:
-            logging.error("No se pudo encontrar la clave RSA apropiada.")
-            return [], "unknown"
-
-        decoded = jwt.decode(
-            token,
-            rsa_key,
-            algorithms=['RS256'],
-            audience=AUDIENCE,
-            issuer=f"https://{AUTH0_DOMAIN}/"
-        )
-
-        roles = decoded.get(f"{NAMESPACE}roles", [])
-        user_id = decoded.get("sub", "unknown")
-
-        logging.info(f"Roles obtenidos: {roles}, User ID: {user_id}")
-        return roles, user_id
-    except ExpiredSignatureError:
-        logging.error("El token ha expirado.")
-        return [], "unknown"
-    except JWTError as e:
-        logging.error(f"Error al decodificar el token: {e}")
-        return [], "unknown"
-
-def send_message_to_queue(queue, message, roles, user_id):
-    """
-    Envía un mensaje a RabbitMQ validando los roles primero.
-    """
-    logging.info(f"Intentando enviar mensaje a la cola '{queue}' con roles: {roles}.")
-    
-    # Validar acceso según rol
-    if "Administrador" in roles:
-        logging.info("Acceso concedido: Administrador.")
-    elif "Padre" in roles and message.get("user_id") == user_id:
-        logging.info("Acceso concedido: Padre.")
-    else:
-        logging.warning("Acceso denegado. Roles insuficientes o ID de usuario no coincide.")
-        return
-
-    # Conectar con RabbitMQ
-    try:
-        credentials = pika.PlainCredentials('monitoring_user', 'isis2503')
-        connection = pika.BlockingConnection(pika.ConnectionParameters('10.128.0.4', 5672, '/', credentials))
-        channel = connection.channel()
-
-        # Publicar el mensaje
-        channel.basic_publish(
-            exchange='bus_mensajeria',
-            routing_key=queue,
-            body=json.dumps(message)
-        )
-
-        logging.info(f"Mensaje enviado a la cola '{queue}': {message}")
-        connection.close()
-    except Exception as e:
-        logging.error(f"Error al enviar mensaje a RabbitMQ: {e}")
-
-def main():
-    # Autenticar al usuario
-    logging.info("Inicio del programa principal.")
-    token = authenticate_user()
-    if not token:
-        logging.error("No se pudo autenticar al usuario. Saliendo del programa.")
-        return
-
-    # Obtener roles e ID del usuario
-    roles, user_id = get_user_roles(token)
-    if not roles:
-        logging.error("No se obtuvieron roles para el usuario. Saliendo del programa.")
-        return
-
-    logging.info(f"Roles obtenidos: {roles}, User ID: {user_id}")
-
-    # Ejemplo de datos de usuarios
-    usuarios = [
-        {"action": "create", "user_id": "auth0|12345", "name": "Juan", "email": "juan@example.com"},
-        {"action": "create", "user_id": "auth0|67890", "name": "Ana", "email": "ana@example.com"}
-    ]
-
-    for usuario in usuarios:
-        send_message_to_queue("user.create", usuario, roles, user_id)
-
-if __name__ == "__main__":
-    main()
+# Ahora puedes usar el access_token
+if access_token:
+    print(f'Token de acceso: {access_token}')
+    # Continúa con la lógica para enviar mensajes a RabbitMQ usando el access_token
+else:
+    print("No se obtuvo el token de acceso.")
