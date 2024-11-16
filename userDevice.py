@@ -1,12 +1,13 @@
 import os
 import json
 import logging
+import requests
+import time
 import webbrowser
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pika
-import requests
 from jose import jwt, JWTError, ExpiredSignatureError
 from authlib.integrations.requests_client import OAuth2Session
 
@@ -18,8 +19,8 @@ logging.basicConfig(
 
 # Configuración de Auth0
 AUTH0_DOMAIN = 'dev-pnpogkrkp7l1bdda.us.auth0.com'  # Reemplaza con tu dominio de Auth0
-CLIENT_ID = 'rjUUNTLgqkhwpW4u1WmRO6JxQ33WI0x2'      # Reemplaza con tu Client ID de la Aplicación Nativa
-REDIRECT_URI = 'http://localhost:8000/callback'
+CLIENT_ID = 'rjUUNTLgqkhwpW4u1WmRO6JxQ33WI0x2'      # Reemplaza con tu Client ID de la Aplicación
+CLIENT_SECRET = 'RpgjMYB54Q5YXjWJwnAEqeRzpYdhf_LDH6VCVkTIxGz9kdWXj9GtdOOukvhoYuLU'  # Configura esta variable de entorno
 AUDIENCE = 'https://users/api'
 NAMESPACE = 'https://ofipensiones.com/claims/'      # Debe coincidir con el namespace en la acción personalizada
 
@@ -74,66 +75,66 @@ def decode_jwt(token):
         logging.error(f"Error al decodificar el token: {e}")
     return None
 
-def authenticate():
+def device_authorization():
+    url = f'https://{AUTH0_DOMAIN}/oauth/device/code'
+    payload = {
+        'client_id': CLIENT_ID,
+        'scope': 'openid profile email',
+        'audience': AUDIENCE
+    }
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+    response.raise_for_status()
+    return response.json()
+
+def poll_for_token(device_code, interval, expires_in):
     global access_token
-    session = OAuth2Session(
-        CLIENT_ID,
-        redirect_uri=REDIRECT_URI,
-        scope='openid profile email'
-    )
+    url = f'https://{AUTH0_DOMAIN}/oauth/token'
+    payload = {
+        'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
+        'device_code': device_code,
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET  # Asegúrate de que esta variable esté configurada
+    }
+    headers = {
+        'Content-Type': 'application/json'
+    }
 
-    authorization_url, state = session.create_authorization_url(
-        f'https://{AUTH0_DOMAIN}/authorize',
-        audience=AUDIENCE,
-        code_challenge_method='S256'
-    )
-
-    logging.info("Abriendo el navegador para autenticación...")
-    webbrowser.open(authorization_url)
-
-    class CallbackHandler(BaseHTTPRequestHandler):
-        def do_GET(self):
-            global access_token
-            if self.path.startswith('/callback'):
-                from urllib.parse import urlparse, parse_qs
-                query = urlparse(self.path).query
-                params = parse_qs(query)
-                code = params.get('code')
-                if code:
-                    code = code[0]
-                    try:
-                        token = session.fetch_token(
-                            f'https://{AUTH0_DOMAIN}/oauth/token',
-                            code=code,
-                            client_secret='RpgjMYB54Q5YXjWJwnAEqeRzpYdhf_LDH6VCVkTIxGz9kdWXj9GtdOOukvhoYuLU'  # Asegúrate de configurar esta variable
-                        )
-                        access_token = token.get('access_token')
-                        logging.info("Autenticación exitosa. Token obtenido.")
-                        self.send_response(200)
-                        self.end_headers()
-                        self.wfile.write(b'Autenticacion exitosa. Puedes cerrar esta ventana.')
-                        threading.Thread(target=self.server.shutdown).start()
-                    except Exception as e:
-                        logging.error(f"Error al intercambiar el código por token: {e}")
-                        self.send_response(500)
-                        self.end_headers()
-                        self.wfile.write(b'Error durante la autenticacion.')
+    start_time = time.time()
+    while True:
+        try:
+            response = requests.post(url, headers=headers, data=json.dumps(payload))
+            if response.status_code == 200:
+                data = response.json()
+                access_token = data.get('access_token')
+                logging.info("Autenticación exitosa. Token obtenido.")
+                return
+            else:
+                error = response.json().get('error')
+                if error == 'authorization_pending':
+                    logging.info("Esperando a que el usuario autorice...")
+                elif error == 'slow_down':
+                    interval += 5
+                    logging.info(f"Reduciendo la velocidad de polling. Nuevo intervalo: {interval} segundos.")
+                elif error == 'expired_token':
+                    logging.error("El token ha expirado. Intenta nuevamente.")
+                    return
+                elif error == 'access_denied':
+                    logging.error("El acceso fue denegado por el usuario.")
+                    return
                 else:
-                    logging.error("No se encontró el código de autorización en la URL.")
-                    self.send_response(400)
-                    self.end_headers()
-                    self.wfile.write('No se encontró el código de autorización.'.encode('utf-8'))
+                    logging.error(f"Error inesperado: {error}")
+                    return
+        except Exception as e:
+            logging.error(f"Error durante el polling: {e}")
+            return
 
-        def log_message(self, format, *args):
-            return  # Evitar logs de HTTPServer en la consola
-
-    server = HTTPServer(('localhost', 8000), CallbackHandler)
-    server_thread = threading.Thread(target=server.serve_forever)
-    server_thread.start()
-
-    # Esperar hasta que el token sea obtenido
-    while access_token is None:
-        pass
+        time.sleep(interval)
+        if time.time() - start_time > expires_in:
+            logging.error("Tiempo de espera agotado. No se obtuvo el token.")
+            return
 
 def send_message_to_queue(queue, message):
     try:
@@ -157,13 +158,30 @@ def send_message_to_queue(queue, message):
         logging.error(f"Error al enviar mensaje a RabbitMQ: {e}")
 
 def main():
-    # Autenticar al usuario
-    authenticate()
+    global access_token
+
+    # Paso 1: Iniciar el Device Authorization Flow
+    device_code_response = device_authorization()
+    device_code = device_code_response['device_code']
+    user_code = device_code_response['user_code']
+    verification_uri = device_code_response['verification_uri']
+    verification_uri_complete = device_code_response.get('verification_uri_complete', verification_uri)
+    expires_in = device_code_response['expires_in']
+    interval = device_code_response['interval']
+
+    # Mostrar instrucciones al usuario
+    logging.info("Por favor, abre la siguiente URL en tu navegador y proporciona el código de usuario para autorizar la aplicación:")
+    logging.info(f"URL: {verification_uri_complete}")
+    logging.info(f"Código de Usuario: {user_code}")
+
+    # Paso 2: Polling para obtener el token
+    poll_for_token(device_code, interval, expires_in)
+
     if not access_token:
         logging.error("No se pudo obtener el token de acceso. Saliendo del programa.")
         return
 
-    # Decodificar el token
+    # Paso 3: Decodificar el token para obtener los roles
     decoded = decode_jwt(access_token)
     if not decoded:
         logging.error("No se pudo decodificar el token. Saliendo del programa.")
@@ -174,14 +192,15 @@ def main():
 
     logging.info(f"Roles obtenidos: {roles}, User ID: {user_id}")
 
-    # Ejemplo de datos de usuarios para enviar a RabbitMQ
+    # Paso 4: Definir los datos a enviar
+    # Puedes adaptar esta parte según tus necesidades específicas
     usuarios = [
         {"action": "create", "user_id": "auth0|12345", "name": "Juan", "email": "juan@example.com"},
         {"action": "create", "user_id": "auth0|67890", "name": "Ana", "email": "ana@example.com"}
     ]
 
+    # Paso 5: Enviar mensajes a RabbitMQ basados en roles
     for usuario in usuarios:
-        # Validar acceso según rol
         if "Administrador" in roles:
             send_message_to_queue("admin.create", usuario)
         elif "Padre" in roles and usuario.get("user_id") == user_id:
