@@ -59,7 +59,7 @@ def send_message_to_queue(queue, message, jwt_token=None):
     )
     channel = connection.channel()
 
-    # Incluir el token JWT en las propiedades del mensaje
+    # Incluir el token JWT en las propiedades del mensaje si está disponible
     properties = pika.BasicProperties(
         content_type='application/json',
         headers={'Authorization': f'Bearer {jwt_token}'} if jwt_token else {}
@@ -80,8 +80,45 @@ def request_report_detail(report_id, jwt_token):
     message = {'action': 'read', 'report_id': report_id}
     send_message_to_queue('report.read', message, jwt_token)
 
+def crear_usuarios_iniciales():
+    usuarios = [
+        {
+            'action': 'create',
+            'name': 'Administrador',
+            'email': 'admin@example.com',
+            'password': 'adminpass123',
+            'role': 'administrador'
+        },
+        {
+            'action': 'create',
+            'name': 'Padre',
+            'email': 'padre@example.com',
+            'password': 'padrepass123',
+            'role': 'padre'
+        },
+        {
+            'action': 'create',
+            'name': 'Estudiante',
+            'email': 'estudiante@example.com',
+            'password': 'estudiantepass123',
+            'role': 'estudiante'
+        }
+    ]
+    
+    print("\nCreando usuarios específicos...\n")
+    for usuario in usuarios:
+        try:
+            send_message_to_queue('user.create', usuario)
+            # Log de creación del usuario
+            print(f"Usuario creado: Email: {usuario['email']}, Contraseña: {usuario['password']}\n")
+        except Exception as e:
+            print(f"Error al crear el usuario {usuario['email']}: {str(e)}\n")
+
 def main():
-    # Paso 1: Solicitar inicio de sesión
+    # Paso 1: Crear usuarios iniciales
+    crear_usuarios_iniciales()
+    
+    # Paso 2: Solicitar inicio de sesión
     email = input("Ingrese su email: ")
     password = input("Ingrese su contraseña: ")
 
@@ -99,7 +136,10 @@ def main():
         print("Error de autenticación:", response.get('message'))
         return
 
-    # Paso 2: Crear solo 3 usuarios con roles específicos
+    # Paso 3: Crear solo 3 usuarios con roles específicos (si es necesario)
+    # En este flujo, ya se crearon los usuarios antes del login, por lo que esta sección puede ser opcional
+    # Puedes comentar o eliminar esta sección si no es necesaria
+    """
     usuarios = [
         {
             'action': 'create',
@@ -129,9 +169,9 @@ def main():
         send_message_to_queue('user.create', usuario, jwt_token)
         # Log de creación del usuario
         print(f"Usuario creado: Email: {usuario['email']}, Contraseña: {usuario['password']}\n")
+    """
     
-    # Opcional: Puedes eliminar las siguientes secciones si no necesitas enviar solicitudes de pago o reportes
-    # Paso 3: Enviar solicitudes de pago (si es necesario)
+    # Paso 4: Enviar solicitudes de pago (si es necesario)
     pagos = [
         {'action': 'process', 'amount': 100, 'currency': 'USD', 'user_id': 1},
         {'action': 'process', 'amount': 250, 'currency': 'USD', 'user_id': 2},
@@ -141,7 +181,7 @@ def main():
     for pago in pagos:
         send_message_to_queue('payment.process', pago, jwt_token)
     
-    # Paso 4: Solicitar la lectura del reporte con ID 1
+    # Paso 5: Solicitar la lectura del reporte con ID 1
     request_report_detail(1, jwt_token)
 
 if __name__ == "__main__":
