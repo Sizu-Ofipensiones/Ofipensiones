@@ -46,8 +46,9 @@ def authenticate_user():
 
 def get_user_roles(token):
     """
-    Recupera los roles del usuario autenticado desde Auth0.
+    Recupera los roles del usuario autenticado desde el token JWT.
     """
+    # Verificar los roles directamente desde el token
     url = f"https://{AUTH0_DOMAIN}/userinfo"
     headers = {'Authorization': f'Bearer {token}'}
 
@@ -55,7 +56,7 @@ def get_user_roles(token):
         response = requests.get(url, headers=headers)
         response.raise_for_status()
         user_data = response.json()
-        roles = user_data.get("https://example.com/roles", [])  # Ajusta según la configuración de tus claims
+        roles = user_data.get("https://example.com/roles", [])  # Ajusta según la configuración del claim en Auth0
         user_id = user_data.get("sub", "unknown")
 
         return roles, user_id
