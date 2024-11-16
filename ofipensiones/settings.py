@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     'users',
     'payments',
     'messageBus',
-    'reports'
+    'reports',
+    # Integración con Auth0
+    'social_django',
 ]
 
 MIDDLEWARE = [
@@ -67,6 +69,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',  # Requerido para Auth0
+                'social_django.context_processors.login_redirect',  # Requerido para Auth0
             ],
         },
     },
@@ -131,3 +135,29 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Configuración de Auth0
+LOGIN_URL = "/login/auth0"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = (
+    "https://your-auth0-domain.auth0.com/v2/logout"
+    "?returnTo=http%3A%2F%2Fyour-app-url:8000"
+)
+
+SOCIAL_AUTH_TRAILING_SLASH = False  # Elimina la barra final en rutas
+SOCIAL_AUTH_AUTH0_DOMAIN = 'your-auth0-domain.auth0.com'
+SOCIAL_AUTH_AUTH0_KEY = 'your-client-id'
+SOCIAL_AUTH_AUTH0_SECRET = 'your-client-secret'
+
+SOCIAL_AUTH_AUTH0_SCOPE = [
+    'openid',  # Identificación del usuario
+    'profile', # Información básica
+    'email',   # Dirección de correo
+    'role',    # Roles personalizados (si los configuras en Auth0)
+]
+
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.auth0.Auth0OAuth2',  # Backend de Auth0
+    'django.contrib.auth.backends.ModelBackend',  # Backend de Django
+)
