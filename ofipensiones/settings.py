@@ -169,8 +169,3 @@ SOCIAL_AUTH_PIPELINE = [  # Note: Sequence of functions matters here.
     'social.pipeline.social_auth.load_extra_data',  # 7
     'social.pipeline.user.user_details',  # 8
 ]
-
-# Adding conditional functions to pipepline.
-# NOTE: Sequence of functions matters here.
-if config.GCPAuthentication.AUTO_CREATE_ACCOUNTS:
-    SOCIAL_AUTH_PIPELINE.insert(6, 'social.pipeline.user.create_user')
