@@ -1,5 +1,5 @@
 # Django framework
-django>=5.1.2
+django>=3.2,<4.0
 
 # Database
 psycopg2>=2.9.6
