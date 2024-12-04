@@ -33,15 +33,25 @@ class Auth0(BaseOAuth2):
             'picture': userinfo['picture'],
             'user_id': userinfo['sub']
         }
-    
+
 # Función para obtener el rol del usuario
 def getRole(request):
- user = request.user
- auth0user = user.social_auth.filter(provider="auth0")[0]
- accessToken = auth0user.extra_data['access_token']
- url = "https://dev-pnpogkrkp7l1bdda.us.auth0.com/userinfo"
- headers = {'authorization': 'Bearer ' + accessToken}
- resp = requests.get(url, headers=headers)
- userinfo = resp.json()
- role = userinfo['dev-pnpogkrkp7l1bdda.us.auth0.com/role']
- return (role)
+    user = request.user
+    if not user.is_authenticated:
+        return None
+    auth0user = user.social_auth.filter(provider="auth0").first()
+    if not auth0user:
+        return None
+    accessToken = auth0user.extra_data['access_token']
+    url = "https://dev-pnpogkrkp7l1bdda.us.auth0.com/userinfo"
+    headers = {'authorization': 'Bearer ' + accessToken}
+    try:
+        resp = requests.get(url, headers=headers)
+        resp.raise_for_status()
+        userinfo = resp.json()
+        role = userinfo.get('dev-pnpogkrkp7l1bdda.us.auth0.com/role')
+        return role
+    except requests.exceptions.RequestException as e:
+        # Manejar el error de la solicitud HTTP
+        print(f"Error al obtener el rol del usuario: {e}")
+        return None
