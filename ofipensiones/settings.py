@@ -140,15 +140,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Configuración de Auth0
 LOGIN_URL = "/login/auth0"
 LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = (
-    "https://your-auth0-domain.auth0.com/v2/logout"
-    "?returnTo=http%3A%2F%2Fyour-app-url:8000"
-)
+LOGOUT_REDIRECT_URL = "https://dev-pnpogkrkp7l1bdda.us.auth0.com/v2/logout?returnTo=http%3A%2F%2F34.27.107.190:8080"
 
 SOCIAL_AUTH_TRAILING_SLASH = False  # Elimina la barra final en rutas
-SOCIAL_AUTH_AUTH0_DOMAIN = 'your-auth0-domain.auth0.com'
-SOCIAL_AUTH_AUTH0_KEY = 'your-client-id'
-SOCIAL_AUTH_AUTH0_SECRET = 'your-client-secret'
+SOCIAL_AUTH_AUTH0_DOMAIN = 'dev-pnpogkrkp7l1bdda.us.auth0.com'
+SOCIAL_AUTH_AUTH0_KEY = 'OdEYKwyKqdb4ejOqhhxSBBzYxWS3ybt1'
+SOCIAL_AUTH_AUTH0_SECRET = 'ENi9bP0uyZSqdpvcn_V42zuojnCYew2K6XT8cfE9cYom-1qI1T7NkpPyyeuuNmd5'
 
 SOCIAL_AUTH_AUTH0_SCOPE = [
     'openid',  # Identificación del usuario
@@ -158,6 +155,6 @@ SOCIAL_AUTH_AUTH0_SCOPE = [
 ]
 
 AUTHENTICATION_BACKENDS = (
-    'social_core.backends.auth0.Auth0OAuth2',  # Backend de Auth0
+    'ofipensiones.auth0Backend.Auth0',  # Backend de Auth0
     'django.contrib.auth.backends.ModelBackend',  # Backend de Django
 )

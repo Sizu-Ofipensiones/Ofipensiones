@@ -1,4 +1,8 @@
-from django.http import HttpResponse
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from ofipensiones.auth0Backend import getRole
 
-def healthCheck(request):
-    return HttpResponse('ok')
+@login_required
+def home(request):
+    role = getRole(request)
+    return render(request, 'index.html', {'role': role})

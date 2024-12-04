@@ -7,6 +7,7 @@ psycopg2>=2.9.6
 # Auth0 integration
 social-auth-app-django>=5.0.0
 requests>=2.31.0  # Para manejar solicitudes HTTP (Auth0 API)
+python-social-auth[auth0]>=0.3.6  # Dependencia específica para Auth0
 
 # Otros paquetes útiles para desarrollo
 gunicorn>=20.1.0  # Para producción
