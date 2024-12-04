@@ -157,3 +157,20 @@ AUTHENTICATION_BACKENDS = (
     'ofipensiones.auth0Backend.Auth0',  # Backend de Auth0
     'django.contrib.auth.backends.ModelBackend',  # Backend de Django
 )
+
+SOCIAL_AUTH_PIPELINE = [  # Note: Sequence of functions matters here.
+    'social.pipeline.social_auth.social_details',  # 0
+    'social.pipeline.social_auth.social_uid',  # 1
+    'social.pipeline.social_auth.auth_allowed',  # 2
+    'social.pipeline.social_auth.social_user',  # 3
+    'social.pipeline.user.get_username',  # 4
+    'social.pipeline.social_auth.associate_by_email',  # 5
+    'social.pipeline.social_auth.associate_user',  # 6
+    'social.pipeline.social_auth.load_extra_data',  # 7
+    'social.pipeline.user.user_details',  # 8
+]
+
+# Adding conditional functions to pipepline.
+# NOTE: Sequence of functions matters here.
+if config.GCPAuthentication.AUTO_CREATE_ACCOUNTS:
+    SOCIAL_AUTH_PIPELINE.insert(6, 'social.pipeline.user.create_user')
