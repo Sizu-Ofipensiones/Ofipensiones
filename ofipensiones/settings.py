@@ -37,11 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Aplicaciones propias
-    'users',
-    'payments',
-    'messageBus',
-    'reports',
     # Integración con Auth0
     'social_django',
 ]
