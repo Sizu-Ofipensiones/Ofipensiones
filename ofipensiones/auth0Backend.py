@@ -59,4 +59,30 @@ class Auth0(BaseOAuth2):
             logger.error(f"Error fetching user details: {e}")
             return {}
 
+# Función para obtener el rol del usuario
+def getRole(request):
+    user = request.user
+    if not user.is_authenticated:
+        logger.warning("User is not authenticated")
+        return None
+    auth0user = user.social_auth.filter(provider="auth0").first()
+    if not auth0user:
+        logger.warning("Auth0 user not found in social_auth")
+        return None
 
+    accessToken = auth0user.extra_data['access_token']
+    url = "https://dev-pnpogkrkp7l1bdda.us.auth0.com/userinfo"
+    headers = {'authorization': 'Bearer ' + accessToken}
+    logger.debug(f"Fetching role information from: {url}")
+
+    try:
+        resp = requests.get(url, headers=headers)
+        resp.raise_for_status()
+        userinfo = resp.json()
+        logger.info("Role information fetched successfully")
+        role = userinfo.get('dev-pnpogkrkp7l1bdda.us.auth0.com/role')
+        logger.info(f"User role: {role}")
+        return role
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error fetching role information: {e}")
+        return None
