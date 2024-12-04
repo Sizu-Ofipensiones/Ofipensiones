@@ -153,20 +153,3 @@ AUTHENTICATION_BACKENDS = (
     'ofipensiones.auth0Backend.Auth0',  # Backend de Auth0
     'django.contrib.auth.backends.ModelBackend',  # Backend de Django
 )
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',  # Captura los logs de nivel DEBUG y superior
-            'class': 'logging.StreamHandler',  # Los imprime en la consola
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'DEBUG',  # Asegúrate de que esté al menos en 'DEBUG'
-            'propagate': True,
-        },
-    },
-}
