@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Listar Reportes</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reportes Actuales</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre Institución</th>
+                <th>Nombre Estudiante</th>
+                <th>Mensualidad</th>
+                <th>Descuento</th>
+                <th>Fecha Último Pago</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reporte in reportes %}
+                <tr>
+                    <td>{{ reporte.id }}</td>
+                    <td>{{ reporte.nombreInstitucion }}</td>
+                    <td>{{ reporte.nombreEstudiante }}</td>
+                    <td>{{ reporte.mensualidad }}</td>
+                    <td>{{ reporte.descuento }}</td>
+                    <td>{{ reporte.fechaUltimaPago }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'home' %}">Volver a la página principal</a>
+</body>
+</html>
