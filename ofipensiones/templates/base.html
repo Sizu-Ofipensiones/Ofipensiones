@@ -11,10 +11,10 @@
         <a href="{% url 'logout' %}">Logout</a>
 
         {% if role == 'administrador' %}
-            <button onclick="location.href='{% url 'listar_reportes' %}'">Consultar Logs</button>
-        {% endif %}
-
+            <button onclick="location.href='{% url 'consultar_logs' %}'">Consultar Logs</button>
+    
         <button onclick="location.href='{% url 'listar_reportes' %}'">Listar Reportes Actuales</button>
+        {% endif %}
         
 
 
