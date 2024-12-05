@@ -5,7 +5,7 @@ from ofipensiones.auth0Backend import getRole
 import logging
 from django.views.decorators.http import require_http_methods
 
-API_GATEWAY_URL = "http://34.67.32.234:8000"
+API_GATEWAY_URL = "http://35.225.182.131:8000"
 
 @login_required
 def home(request):
