@@ -1,0 +1,55 @@
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Python ###
+# Entorno virtual
+env/
+venv/
+ENV/
+*.env
+
+# Archivos compilados
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Configuración de herramientas
+.mypy_cache/
+pytest_cache/
+coverage/
+htmlcov/
+
+# Logs y dumps
+*.log
+*.sqlite3
+*.dump
