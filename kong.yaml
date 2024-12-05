@@ -10,26 +10,22 @@ services:
           - /reportes
         strip_path: false
 
-  - name: usuarios_service
-    host: usuarios_upstream
-    protocol: http
-    routes:
-      - name: usuarios
-        paths:
-          - /usuarios
-        strip_path: false
-
-  - name: logs_service
-    host: logs_upstream
-    protocol: http
-    routes:
-      - name: logs
-        paths:
-          - /logs
-        strip_path: false
-
 upstreams:
   - name: reportes_upstream
+    healthchecks:
+      active:
+        http_path: "/health"  # Ruta para hacer el healthcheck
+        healthy:
+          interval: 5  # Intervalo de chequear la salud (en segundos)
+          http_statuses: [200]  # Solo se considera saludable si responde con código 200
+          successes: 1  # Número de intentos exitosos para marcarlo saludable
+        unhealthy:
+          interval: 5  # Intervalo para chequear la salud de las instancias no saludables
+          http_statuses: [500, 502, 503]  # Respuestas que indican que la instancia está caída
+          tcp_failures: 3  # Número de fallos TCP antes de marcarlo como no saludable
+          timeouts: 3  # Número de timeouts antes de marcarlo como no saludable
+      retries: 3  # Número de intentos antes de marcar un microservicio como fallido
+
     targets:
       - target: 10.128.0.7:8000
         weight: 25  
@@ -39,13 +35,3 @@ upstreams:
         weight: 25
       - target: 10.128.0.10:8000
         weight: 25
-
-  - name: usuarios_upstream
-    targets:
-      - target: 10.128.0.2:8000
-        weight: 100
-
-  - name: logs_upstream
-    targets:
-      - target: 10.128.0.14:8000
-        weight: 100
