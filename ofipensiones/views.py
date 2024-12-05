@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from ofipensiones.auth0Backend import getRole
 import logging
+from django.views.decorators.http import require_http_methods
 
 API_GATEWAY_URL = "http://34.67.32.234:8000"
 
@@ -59,8 +60,9 @@ def obtener_reporte_por_id(request, id):
         return render(request, 'error.html', {'error': 'Reporte no encontrado'})
 
 @login_required
+@require_http_methods(["GET", "POST", "PUT"])
 def actualizar_reporte(request, id):
-    if request.method == "POST":
+    if request.method == "PUT":
         data = {
             "nombreInstitucion": request.POST.get("institucion"),
             "nombreEstudiante": request.POST.get("estudiante"),
@@ -70,9 +72,9 @@ def actualizar_reporte(request, id):
         }
         response = requests.put(f"{API_GATEWAY_URL}/reportes/{id}", json=data)
         if response.status_code == 200:
-            return render(request, 'modificar_recibo.html', {'success': True, 'reporte': data})
+            return render(request, 'modificar_recibo.html', {'success': True, 'reporte': data, 'reporte_id': id})
         else:
-            return render(request, 'modificar_recibo.html', {'error': True, 'reporte': data})
+            return render(request, 'modificar_recibo.html', {'error': True, 'reporte': data, 'reporte_id': id})
     else:
         response = requests.get(f"{API_GATEWAY_URL}/reportes/{id}")
         if response.status_code == 200:

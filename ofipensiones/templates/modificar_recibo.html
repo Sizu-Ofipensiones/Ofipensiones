@@ -5,8 +5,9 @@
 </head>
 <body>
     <h1>Modificar Recibo de Pago</h1>
-    <form method="post" action="{% url 'actualizar_reporte' reporte.id %}">
+    <form id="modificarReciboForm" method="post" action="{% url 'actualizar_reporte' reporte.id %}">
         {% csrf_token %}
+        <input type="hidden" name="_method" value="PUT">
         <label for="institucion">Nombre de la Institución:</label>
         <input type="text" id="institucion" name="institucion" value="{{ reporte.nombreInstitucion }}"><br><br>
         
@@ -24,5 +25,18 @@
         
         <input type="submit" value="Modificar">
     </form>
+
+    <script>
+        document.getElementById('modificarReciboForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var form = event.target;
+            var methodInput = document.createElement('input');
+            methodInput.setAttribute('type', 'hidden');
+            methodInput.setAttribute('name', '_method');
+            methodInput.setAttribute('value', 'PUT');
+            form.appendChild(methodInput);
+            form.submit();
+        });
+    </script>
 </body>
 </html>
