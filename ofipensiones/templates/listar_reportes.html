@@ -35,7 +35,7 @@
         <tbody>
             {% for reporte in reportes %}
                 <tr>
-                    <td>{{ reporte.id }}</td>
+                    <td><a href="{% url 'actualizar_reporte' reporte.id %}">{{ reporte.id }}</a></td>
                     <td>{{ reporte.nombreInstitucion }}</td>
                     <td>{{ reporte.nombreEstudiante }}</td>
                     <td>{{ reporte.mensualidad }}</td>

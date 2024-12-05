@@ -4,8 +4,8 @@
     <title>Modificar Recibo de Pago</title>
 </head>
 <body>
-    <h1>Modificar  Recibo de Pago</h1>
-    <form method="post">
+    <h1>Modificar Recibo de Pago</h1>
+    <form method="post" action="{% url 'actualizar_reporte' reporte.id %}">
         {% csrf_token %}
         <label for="institucion">Nombre de la Institución:</label>
         <input type="text" id="institucion" name="institucion" value="{{ reporte.nombreInstitucion }}"><br><br>

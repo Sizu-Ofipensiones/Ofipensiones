@@ -62,18 +62,24 @@ def obtener_reporte_por_id(request, id):
 def actualizar_reporte(request, id):
     if request.method == "POST":
         data = {
-            "nombre_institucion": request.POST.get("institucion"),
-            "nombre_estudiante": request.POST.get("estudiante"),
+            "nombreInstitucion": request.POST.get("institucion"),
+            "nombreEstudiante": request.POST.get("estudiante"),
             "mensualidad": request.POST.get("mensualidad"),
             "descuento": request.POST.get("descuento"),
             "fechaUltimaPago": request.POST.get("fechaUltimaPago"),
         }
         response = requests.put(f"{API_GATEWAY_URL}/reportes/{id}", json=data)
         if response.status_code == 200:
-            return render(request, 'actualizar_reporte.html', {'success': True})
+            return render(request, 'modificar_recibo.html', {'success': True, 'reporte': data})
         else:
-            return render(request, 'actualizar_reporte.html', {'error': True})
-    return render(request, 'actualizar_reporte.html')
+            return render(request, 'modificar_recibo.html', {'error': True, 'reporte': data})
+    else:
+        response = requests.get(f"{API_GATEWAY_URL}/reportes/{id}")
+        if response.status_code == 200:
+            reporte = response.json()
+            return render(request, 'modificar_recibo.html', {'reporte': reporte})
+        else:
+            return render(request, 'error.html', {'error': 'Reporte no encontrado'})
 
 @login_required
 def eliminar_reporte(request, id):
