@@ -24,7 +24,6 @@ upstreams:
           http_statuses: [500, 502, 503]  # Respuestas que indican que la instancia está caída
           tcp_failures: 3  # Número de fallos TCP antes de marcarlo como no saludable
           timeouts: 3  # Número de timeouts antes de marcarlo como no saludable
-      retries: 3  # Número de intentos antes de marcar un microservicio como fallido
 
     targets:
       - target: 10.128.0.7:8000
