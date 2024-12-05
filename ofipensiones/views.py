@@ -106,7 +106,7 @@ def eliminar_reporte(request, id):
 @login_required
 def obtener_usuarios(request):
     try:
-        response = requests.get(f"{API_GATEWAY_URL}/usuarios")
+        response = requests.get(f"{API_GATEWAY_URL}/usuarios/")
         response.raise_for_status()
         usuarios = response.json()
         return render(request, 'listar_usuarios.html', {'usuarios': usuarios})
