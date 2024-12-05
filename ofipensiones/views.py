@@ -5,6 +5,8 @@ from django.contrib.auth.decorators import login_required
 from ofipensiones.auth0Backend import getRole
 import logging
 from django.views.decorators.http import require_http_methods
+import time
+
 
 API_GATEWAY_URL = "http://35.225.182.131:8000"
 
@@ -113,3 +115,22 @@ def obtener_usuarios(request):
     except requests.exceptions.RequestException as e:
         return render(request, 'error.html', {'error': 'No se pudieron obtener los usuarios'})
     
+
+@login_required
+def prueba_carga_usuarios(request):
+    try:
+        total_requests = 1000
+        total_time = 0
+
+        # Hacer 1000 solicitudes
+        for _ in range(total_requests):
+            start_time = time.time()  # Marca el inicio de la solicitud
+            response = requests.get(f"{API_GATEWAY_URL}/usuarios/")
+            total_time += (time.time() - start_time)  # Suma el tiempo de respuesta de la solicitud
+
+        # Calcula el tiempo promedio
+        average_time = total_time / total_requests
+        return JsonResponse({"message": f"Prueba de carga completada. Tiempo promedio de respuesta: {average_time:.4f} segundos."})
+
+    except requests.exceptions.RequestException as e:
+        return JsonResponse({"error": f"Error durante la prueba de carga: {str(e)}"}, status=500)
