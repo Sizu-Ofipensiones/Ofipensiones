@@ -2,7 +2,7 @@ import os
 import django
 
 # Configurar el entorno de Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tu_proyecto.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ofipensiones.settings')
 django.setup()
 
 from users.models import User
