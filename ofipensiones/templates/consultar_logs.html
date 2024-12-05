@@ -1,10 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Consultar Logs</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            font-size: 1.2rem;
+            color: #555;
+        }
+    </style>
 </head>
 <body>
-    <h1>Consultar Logs</h1>
-    <!-- Contenido para consultar logs -->
+    <h1>Logs Viewer</h1>
+    <div class="loader" id="loader">Loading logs...</div>
+    <table id="logsTable">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Evento</th>
+                <th>Fecha</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Logs will be populated here -->
+        </tbody>
+    </table>
+
+    <script>
+        const API_URL = 'http://34.67.32.234:8000/logs'; // Replace with your backend's IP or hostname
+        const logsTable = document.getElementById('logsTable').querySelector('tbody');
+        const loader = document.getElementById('loader');
+
+        async function fetchLogs() {
+            loader.style.display = 'block'; // Show loader
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch logs');
+                }
+                const logs = await response.json();
+                populateTable(logs);
+            } catch (error) {
+                console.error('Error fetching logs:', error);
+                logsTable.innerHTML = `<tr><td colspan="3">Failed to fetch logs</td></tr>`;
+            } finally {
+                loader.style.display = 'none'; // Hide loader
+            }
+        }
+
+        function populateTable(logs) {
+            logsTable.innerHTML = ''; // Clear existing logs
+            logs.forEach(logEntry => {
+                const { email, logs } = logEntry;
+                logs.forEach(log => {
+                    const row = document.createElement('tr');
+                    const event = log.event || 'Unknown Event';
+                    const date = log.date || 'Unknown Date';
+
+                    row.innerHTML = `
+                        <td>${email}</td>
+                        <td>${event}</td>
+                        <td>${new Date(date).toLocaleString()}</td>
+                    `;
+                    logsTable.appendChild(row);
+                });
+            });
+        }
+
+        // Fetch logs on page load
+        fetchLogs();
+    </script>
 </body>
 </html>
