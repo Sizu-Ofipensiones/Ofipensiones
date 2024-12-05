@@ -60,9 +60,9 @@ def obtener_reporte_por_id(request, id):
         return render(request, 'error.html', {'error': 'Reporte no encontrado'})
 
 @login_required
-@require_http_methods(["GET", "POST", "PUT"])
+@require_http_methods(["GET", "POST"])
 def actualizar_reporte(request, id):
-    if request.method == "PUT":
+    if request.method == "POST":
         data = {
             "nombreInstitucion": request.POST.get("institucion"),
             "nombreEstudiante": request.POST.get("estudiante"),
@@ -70,17 +70,24 @@ def actualizar_reporte(request, id):
             "descuento": request.POST.get("descuento"),
             "fechaUltimaPago": request.POST.get("fechaUltimaPago"),
         }
-        response = requests.put(f"{API_GATEWAY_URL}/reportes/{id}", json=data)
-        if response.status_code == 200:
-            return render(request, 'modificar_recibo.html', {'success': True, 'reporte': data, 'reporte_id': id})
-        else:
-            return render(request, 'modificar_recibo.html', {'error': True, 'reporte': data, 'reporte_id': id})
-    else:
-        response = requests.get(f"{API_GATEWAY_URL}/reportes/{id}")
-        if response.status_code == 200:
+        try:
+            response = requests.put(f"{API_GATEWAY_URL}/reportes/{id}", json=data)
+            response.raise_for_status()
             reporte = response.json()
+            logger.info("Reporte actualizado exitosamente: %s", reporte)
+            return render(request, 'modificar_recibo.html', {'success': True, 'reporte': reporte})
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error al actualizar reporte: {e}")
+            return render(request, 'modificar_recibo.html', {'error': True, 'reporte': data})
+    else:
+        try:
+            response = requests.get(f"{API_GATEWAY_URL}/reportes/{id}")
+            response.raise_for_status()
+            reporte = response.json()
+            logger.info("Reporte obtenido para actualización: %s", reporte)
             return render(request, 'modificar_recibo.html', {'reporte': reporte})
-        else:
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error al obtener reporte: {e}")
             return render(request, 'error.html', {'error': 'Reporte no encontrado'})
 
 @login_required
