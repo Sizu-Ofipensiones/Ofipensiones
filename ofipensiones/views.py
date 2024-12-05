@@ -1,4 +1,5 @@
 import requests
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from ofipensiones.auth0Backend import getRole
@@ -14,9 +15,13 @@ def home(request):
 
 @login_required
 def consultar_logs(request):
-    response = requests.get(f"{API_GATEWAY_URL}/logs")
-    logs = response.json()
-    return render(request, 'consultar_logs.html', {'logs': logs})
+    try:
+        response = requests.get(f"{API_GATEWAY_URL}/logs")
+        response.raise_for_status()  # Verifica si la respuesta tiene un error HTTP
+        logs = response.json()
+        return JsonResponse(logs, safe=False)  # Muestra el JSON directamente
+    except requests.exceptions.RequestException as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 logger = logging.getLogger(__name__)
 
