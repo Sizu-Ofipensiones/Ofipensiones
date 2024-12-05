@@ -2,8 +2,13 @@ import requests
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from ofipensiones.auth0Backend import getRole
+from django.http import JsonResponse
+import logging
 
 API_GATEWAY_URL = "http://34.67.32.234:8000"
+
+def health_check(request):
+    return JsonResponse({"status": "OK"}, status=200)
 
 @login_required
 def home(request):
@@ -16,13 +21,19 @@ def consultar_logs(request):
     logs = response.json()
     return render(request, 'consultar_logs.html', {'logs': logs})
 
+logger = logging.getLogger(__name__)
+
 @login_required
 def obtener_reportes(request):
-    response = requests.get(f"{API_GATEWAY_URL}/reportes")
-    if response.status_code == 200:
+    try:
+        response = requests.get(f"{API_GATEWAY_URL}/reportes")
+        response.raise_for_status()
         reportes = response.json()
+        logger.info("url de la api: %s", f"{API_GATEWAY_URL}/reportes")
+        logger.info("Reportes obtenidos exitosamente")
         return render(request, 'listar_reportes.html', {'reportes': reportes})
-    else:
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error al obtener reportes: {e}")
         return render(request, 'error.html', {'error': 'No se pudieron obtener los reportes'})
 
 @login_required

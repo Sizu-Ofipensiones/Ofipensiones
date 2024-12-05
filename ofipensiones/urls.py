@@ -8,6 +8,7 @@ urlpatterns = [
     path('consultar_logs/', views.consultar_logs, name='consultar_logs'),
     path('actualizar_reporte/', views.actualizar_reporte, name='actualizar_reporte'),
     path('listar_reportes/', views.obtener_reportes, name='listar_reportes'),
+    path('health/', views.health_check, name='health_check'),
     path(r'', include('django.contrib.auth.urls')),
     path(r'', include('social_django.urls')),
 ]
