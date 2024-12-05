@@ -17,17 +17,61 @@ def consultar_logs(request):
     return render(request, 'consultar_logs.html', {'logs': logs})
 
 @login_required
-def modificar_recibo(request):
+def obtener_reportes(request):
+    response = requests.get(f"{API_GATEWAY_URL}/reportes")
+    if response.status_code == 200:
+        reportes = response.json()
+        return render(request, 'listar_reportes.html', {'reportes': reportes})
+    else:
+        return render(request, 'error.html', {'error': 'No se pudieron obtener los reportes'})
+
+@login_required
+def crear_reporte(request):
     if request.method == "POST":
         data = {
-            "institucion": request.POST.get("institucion"),
-            "estudiante": request.POST.get("estudiante"),
-            "valor": request.POST.get("valor"),
-            "inscripcion": request.POST.get("inscripcion"),
+            "nombre_institucion": request.POST.get("institucion"),
+            "nombre_estudiante": request.POST.get("estudiante"),
+            "mensualidad": request.POST.get("mensualidad"),
+            "descuento": request.POST.get("descuento"),
+            "fechaUltimaPago": request.POST.get("fechaUltimaPago"),
         }
-        response = requests.post(f"{API_GATEWAY_URL}/recibos", json=data)
+        response = requests.post(f"{API_GATEWAY_URL}/reportes", json=data)
         if response.status_code == 200:
-            return render(request, 'modificar_recibo.html', {'success': True})
+            return render(request, 'crear_reporte.html', {'success': True})
         else:
-            return render(request, 'modificar_recibo.html', {'error': True})
-    return render(request, 'modificar_recibo.html')
+            return render(request, 'crear_reporte.html', {'error': True})
+    return render(request, 'crear_reporte.html')
+
+@login_required
+def obtener_reporte_por_id(request, id):
+    response = requests.get(f"{API_GATEWAY_URL}/reportes/{id}")
+    if response.status_code == 200:
+        reporte = response.json()
+        return render(request, 'ver_reporte.html', {'reporte': reporte})
+    else:
+        return render(request, 'error.html', {'error': 'Reporte no encontrado'})
+
+@login_required
+def actualizar_reporte(request, id):
+    if request.method == "POST":
+        data = {
+            "nombre_institucion": request.POST.get("institucion"),
+            "nombre_estudiante": request.POST.get("estudiante"),
+            "mensualidad": request.POST.get("mensualidad"),
+            "descuento": request.POST.get("descuento"),
+            "fechaUltimaPago": request.POST.get("fechaUltimaPago"),
+        }
+        response = requests.put(f"{API_GATEWAY_URL}/reportes/{id}", json=data)
+        if response.status_code == 200:
+            return render(request, 'actualizar_reporte.html', {'success': True})
+        else:
+            return render(request, 'actualizar_reporte.html', {'error': True})
+    return render(request, 'actualizar_reporte.html')
+
+@login_required
+def eliminar_reporte(request, id):
+    response = requests.delete(f"{API_GATEWAY_URL}/reportes/{id}")
+    if response.status_code == 204:
+        return render(request, 'eliminar_reporte.html', {'success': True})
+    else:
+        return render(request, 'eliminar_reporte.html', {'error': True})

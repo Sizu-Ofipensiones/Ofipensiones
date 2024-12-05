@@ -11,12 +11,16 @@
         <a href="{% url 'logout' %}">Logout</a>
 
         {% if role == 'administrador' %}
-            <button onclick="location.href='{% url 'consultar_logs' %}'">Consultar Logs</button>
+            <button onclick="location.href='{% url 'listar_reportes' %}'">Consultar Logs</button>
         {% endif %}
 
         {% if role == 'administrador' or role == 'padre_de_familia' %}
             <button onclick="location.href='{% url 'modificar_recibo' %}'">Modificar Recibo de Pago</button>
         {% endif %}
+
+        <button onclick="location.href='{% url 'listar_reportes' %}'">Listar Reportes Actuales</button>
+
+
     {% else %}
         <a href="{% url 'social:begin' 'auth0' %}">Login with Auth0</a>
     {% endif %}
