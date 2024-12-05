@@ -1,0 +1,51 @@
+_format_version: "2.1"
+
+services:
+  - name: reportes_service
+    host: reportes_upstream
+    protocol: http
+    routes:
+      - name: reportes
+        paths:
+          - /reportes
+        strip_path: false
+
+  - name: usuarios_service
+    host: usuarios_upstream
+    protocol: http
+    routes:
+      - name: usuarios
+        paths:
+          - /usuarios
+        strip_path: false
+
+  - name: logs_service
+    host: logs_upstream
+    protocol: http
+    routes:
+      - name: logs
+        paths:
+          - /logs
+        strip_path: false
+
+upstreams:
+  - name: reportes_upstream
+    targets:
+      - target: 10.128.0.7:8000
+        weight: 25  
+      - target: 10.128.0.8:8000
+        weight: 25
+      - target: 10.128.0.9:8000
+        weight: 25
+      - target: 10.128.0.10:8000
+        weight: 25
+
+  - name: usuarios_upstream
+    targets:
+      - target: 10.128.0.2:8000
+        weight: 100
+
+  - name: logs_upstream
+    targets:
+      - target: 10.128.0.14:8000
+        weight: 100
