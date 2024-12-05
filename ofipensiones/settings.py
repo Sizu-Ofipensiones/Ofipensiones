@@ -39,11 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # Aplicaciones propias
     'users',
-    'payments',
-    'messageBus',
-    'reports',
-    # Integración con Auth0
-    'social_django',
 ]
 
 MIDDLEWARE = [
