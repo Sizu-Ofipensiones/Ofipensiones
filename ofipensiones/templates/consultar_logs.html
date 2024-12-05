@@ -50,6 +50,7 @@
             <tr>
                 <th>Email</th>
                 <th>Evento</th>
+                <th>Estatus</th>
                 <th>Fecha</th>
             </tr>
         </thead>
@@ -59,7 +60,7 @@
     </table>
 
     <script>
-        const API_URL = 'http://34.67.32.234:8000/logs'; // Replace with your backend's IP or hostname
+        const API_URL = 'http://35.225.182.131:8000/logs'; // Replace with your API Gateway URL
         const logsTable = document.getElementById('logsTable').querySelector('tbody');
         const loader = document.getElementById('loader');
 
@@ -74,28 +75,39 @@
                 populateTable(logs);
             } catch (error) {
                 console.error('Error fetching logs:', error);
-                logsTable.innerHTML = `<tr><td colspan="3">Failed to fetch logs</td></tr>`;
+                logsTable.innerHTML = `<tr><td colspan="4">Failed to fetch logs</td></tr>`;
             } finally {
                 loader.style.display = 'none'; // Hide loader
             }
         }
 
-        function populateTable(logs) {
+        function populateTable(usersLogs) {
             logsTable.innerHTML = ''; // Clear existing logs
-            logs.forEach(logEntry => {
-                const { email, logs } = logEntry;
-                logs.forEach(log => {
-                    const row = document.createElement('tr');
-                    const event = log.event || 'Unknown Event';
-                    const date = log.date || 'Unknown Date';
 
+            usersLogs.forEach(userLog => {
+                const { email, logs } = userLog;
+
+                if (logs && logs.length > 0) {
+                    logs.forEach(log => {
+                        const row = document.createElement('tr');
+                        const { action, status, timestamp } = log;
+
+                        row.innerHTML = `
+                            <td>${email}</td>
+                            <td>${action || 'N/A'}</td>
+                            <td>${status || 'N/A'}</td>
+                            <td>${new Date(timestamp).toLocaleString() || 'N/A'}</td>
+                        `;
+                        logsTable.appendChild(row);
+                    });
+                } else {
+                    const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${email}</td>
-                        <td>${event}</td>
-                        <td>${new Date(date).toLocaleString()}</td>
+                        <td colspan="3">No logs available</td>
                     `;
                     logsTable.appendChild(row);
-                });
+                }
             });
         }
 
