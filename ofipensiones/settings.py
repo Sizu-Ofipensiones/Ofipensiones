@@ -129,7 +129,7 @@ STATIC_URL = '/static/'
 # Configuración de Auth0
 LOGIN_URL = "/login/auth0"
 LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "https://dev-pnpogkrkp7l1bdda.us.auth0.com/v2/logout?returnTo=http%3A%2F%2F34.27.107.190:8080"
+LOGOUT_REDIRECT_URL = "https://dev-pnpogkrkp7l1bdda.us.auth0.com/v2/logout?returnTo=http%3A%2F%2F34.123.57.221:8080"
 
 SOCIAL_AUTH_TRAILING_SLASH = False  # Elimina la barra final en rutas
 SOCIAL_AUTH_AUTH0_DOMAIN = 'dev-pnpogkrkp7l1bdda.us.auth0.com'
