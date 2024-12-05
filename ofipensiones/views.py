@@ -2,13 +2,9 @@ import requests
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from ofipensiones.auth0Backend import getRole
-from django.http import JsonResponse
 import logging
 
 API_GATEWAY_URL = "http://34.67.32.234:8000"
-
-def health_check(request):
-    return JsonResponse({"status": "OK"}, status=200)
 
 @login_required
 def home(request):
