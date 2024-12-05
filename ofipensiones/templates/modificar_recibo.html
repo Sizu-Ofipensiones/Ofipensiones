@@ -5,9 +5,8 @@
 </head>
 <body>
     <h1>Modificar Recibo de Pago</h1>
-    <form id="modificarReciboForm" method="post" action="{% url 'actualizar_reporte' reporte.id %}">
+    <form id="modificarReciboForm">
         {% csrf_token %}
-        <input type="hidden" name="_method" value="PUT">
         <label for="institucion">Nombre de la Institución:</label>
         <input type="text" id="institucion" name="institucion" value="{{ reporte.nombreInstitucion }}"><br><br>
         
@@ -30,12 +29,32 @@
         document.getElementById('modificarReciboForm').addEventListener('submit', function(event) {
             event.preventDefault();
             var form = event.target;
-            var methodInput = document.createElement('input');
-            methodInput.setAttribute('type', 'hidden');
-            methodInput.setAttribute('name', '_method');
-            methodInput.setAttribute('value', 'PUT');
-            form.appendChild(methodInput);
-            form.submit();
+            var formData = new FormData(form);
+            var data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+            fetch("{% url 'actualizar_reporte' reporte.id %}", {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Reporte actualizado exitosamente');
+                } else {
+                    alert('Error al actualizar el reporte');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al actualizar el reporte');
+            });
         });
     </script>
 </body>
