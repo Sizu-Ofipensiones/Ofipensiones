@@ -76,16 +76,7 @@ WSGI_APPLICATION = 'ofipensiones.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_users',  
-        'USER': 'postgres',    
-        'PASSWORD': '12345',  
-        'HOST': 'localhost',   
-        'PORT': '5432',        
-    }
-}
+
 
 
 
