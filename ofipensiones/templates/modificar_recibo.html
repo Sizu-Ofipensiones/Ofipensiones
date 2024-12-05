@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Modificar Recibo de Pago</title>
+</head>
+<body>
+    <h1>Modificar Recibo de Pago</h1>
+    <form method="post">
+        {% csrf_token %}
+        <label for="institucion">Nombre de la Institución:</label>
+        <input type="text" id="institucion" name="institucion"><br><br>
+        <label for="estudiante">Nombre del Estudiante:</label>
+        <input type="text" id="estudiante" name="estudiante"><br><br>
+        <label for="valor">Valor:</label>
+        <input type="text" id="valor" name="valor"><br><br>
+        <label for="inscripcion">Inscripción:</label>
+        <input type="text" id="inscripcion" name="inscripcion"><br><br>
+        <input type="submit" value="Modificar">
+    </form>
+</body>
+</html>

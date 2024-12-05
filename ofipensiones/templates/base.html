@@ -7,8 +7,16 @@
     <h1>Bienvenido a la página inicial de Ofipensiones</h1>
     {% if user.is_authenticated %}
         <p>Hola, {{ user.username }}!</p>
-        <p>Tu rol es: {{ user.role }}</p>
+        <p>Tu rol es: {{ role }}</p>
         <a href="{% url 'logout' %}">Logout</a>
+
+        {% if role == 'administrador' %}
+            <button onclick="location.href='{% url 'consultar_logs' %}'">Consultar Logs</button>
+        {% endif %}
+
+        {% if role == 'administrador' or role == 'padre_de_familia' %}
+            <button onclick="location.href='{% url 'modificar_recibo' %}'">Modificar Recibo de Pago</button>
+        {% endif %}
     {% else %}
         <a href="{% url 'social:begin' 'auth0' %}">Login with Auth0</a>
     {% endif %}
