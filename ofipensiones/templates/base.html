@@ -15,7 +15,7 @@
         {% endif %}
 
         {% if role == 'administrador' or role == 'padre_de_familia' %}
-            <button onclick="location.href='{% url 'modificar_recibo' %}'">Modificar Recibo de Pago</button>
+            <button onclick="location.href='{% url 'actualizar_reporte' %}'">Modificar Recibo de Pago</button>
         {% endif %}
 
         <button onclick="location.href='{% url 'listar_reportes' %}'">Listar Reportes Actuales</button>
